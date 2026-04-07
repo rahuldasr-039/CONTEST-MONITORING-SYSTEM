@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        👋 Welcome, {{ user.name }} 
+        <small class="text-muted fs-6">({{ user.role|upper }})</small>
+    </h2>
+    <span class="badge bg-secondary">{{ user.dept_code }}</span>
+</div>
+
+{% if approvals %}
+<div class="card mb-4 border-warning shadow-sm">
+    <div class="card-header bg-warning text-dark fw-bold">
+        ⚠️ Pending Approvals
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in approvals %}
+                <tr>
+                    <td>{{ u.name }}</td>
+                    <td>{{ u.role|title }}</td>
+                    <td>{{ u.dept_code }} {% if u.year_of_study %}(Year {{ u.year_of_study }}){% endif %}</td>
+                    <td>
+                        <a href="{{ url_for('approve_user', user_id=u.id) }}" class="btn btn-success btn-sm">Approve</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+
+{% if user.role == 'student' %}
+    
+    <div class="card mb-4 border-info shadow-sm">
+        <div class="card-header bg-info text-white fw-bold d-flex justify-content-between align-items-center">
+            <span>📝 Assigned Contests</span>
+            <span class="badge bg-white text-info rounded-pill">{{ assigned_work|length }} Tasks</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Contest Name</th>
+                            <th>Platform</th>
+                            <th>Due Date</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for work in assigned_work %}
+                        <tr class="align-middle">
+                            <td class="fw-bold">{{ work.name }}</td>
+                            <td><span class="badge bg-secondary">{{ work.platform }}</span></td>
+                            <td>{{ work.date }}</td>
+                            <td>
+                                <a href="{{ work.link }}" target="_blank" class="btn btn-sm btn-primary">
+                                    Go to Contest &rarr;
+                                </a>
+                            </td>
+                            <td>
+                                {% if work.status == 'Submitted' %}
+                                    <span class="badge bg-success">✅ Auto-Submitted</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">⏳ Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">No contests assigned yet. Good job!</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="mb-3">My Performance Snapshot</h4>
+    <div class="row mb-4">
+        {% for stat in user_stats %}
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header fw-bold bg-light">{{ stat.platform }}</div>
+                <div class="card-body">
+                    {% if stat.error %}
+                        <p class="text-danger mb-0">Profile Not Found / Error</p>
+                    {% else %}
+                        <h4 class="card-title">{{ stat.rating }}</h4>
+                        <p class="card-text text-muted">Rank: {{ stat.rank }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="text-center">
+        <a href="{{ url_for('student_detail', user_id=user.id) }}" class="btn btn-outline-primary">
+            View My Detailed Analytics &rarr;
+        </a>
+    </div>
+{% endif %}
+
+
+{% if user.role in ['hod', 'mentor', 'incharge'] %}
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fa-solid fa-calendar-xmark me-2 text-danger"></i>Daily Platform Defaulters Report
+            </h5>
+        </div>
+        <div class="card-body p-4 bg-light">
+            <p class="text-muted small mb-3">
+                Select a date from the past 7 days to generate an Excel-ready list of students in your scope who solved <strong>0 problems</strong> on that platform.
+            </p>
+            
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary mb-1">Target Date</label>
+                    <input type="date" id="defaulterDate" class="form-control shadow-sm" value="">
+                </div>
+                
+                <div class="col-md-8 mt-md-4 pt-md-2">
+                    <button onclick="downloadDaily('leetcode')" class="btn btn-warning shadow-sm me-2 text-dark fw-bold">
+                        <i class="fa-solid fa-download me-1"></i> LeetCode Report
+                    </button>
+                    <button onclick="downloadDaily('codeforces')" class="btn btn-primary shadow-sm fw-bold">
+                        <i class="fa-solid fa-download me-1"></i> Codeforces Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set default date to Today
+        document.getElementById('defaulterDate').valueAsDate = new Date();
+
+        function downloadDaily(platform) {
+            const selectedDate = document.getElementById('defaulterDate').value;
+            if (!selectedDate) {
+                alert("Please select a date first.");
+                return;
+            }
+            
+            // Alert the user that this might take a moment
+            alert("Generating report! Please wait 10-30 seconds as the system scans live platform data for all students...");
+            
+            // Redirect to the download route with the date parameter
+            window.location.href = `/download_daily_defaulters/${platform}?date=${selectedDate}`;
+        }
+    </script>
+    <div class="card mb-4 border-dark shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold">📡 Live Contest Monitoring</span>
+            {% if user.role == 'hod' %}
+                <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addContestModal">
+                    + Assign New Contest
+                </button>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Contest Name</th>
+                            <th>Platform</th>
+                            <th>Due Date</th>
+                            <th>Monitor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in managed_contests %}
+                        <tr class="align-middle">
+                            <td class="fw-bold">
+                                {{ c.name }} <br>
+                                <a href="{{ c.link }}" target="_blank" class="small text-decoration-none">View Link</a>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ c.platform }}</span></td>
+                            <td>{{ c.date }}</td>
+                            <td>
+                                <a href="{{ url_for('contest_monitor', contest_id=c.id) }}" class="btn btn-sm btn-outline-danger">
+                                    View Defaulters
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center py-3 text-muted">No active contests to monitor.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+
+{% if user.role == 'mentor' %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Class Progress (Year {{ user.incharge_year }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Codeforces</th>
+                            <th>LeetCode</th>
+                            <th>CodeChef</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in mentor_students %}
+                        <tr>
+                            <td class="fw-bold">
+                                <a href="{{ url_for('student_detail', user_id=s.id) }}" class="text-decoration-none">
+                                    {{ s.name }}
+                                </a>
+                            </td>
+                            {% for stat in s.stats %}
+                            <td>
+                                {% if stat.error %}
+                                    <span class="badge bg-danger">Error</span>
+                                {% else %}
+                                    <strong>{{ stat.rating }}</strong> <br>
+                                    <small class="text-muted">{{ stat.rank }}</small>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            <td>
+                                <a href="{{ url_for('student_detail', user_id=s.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">No students assigned yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+
+{% if user.role == 'hod' %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">Department Mentors</div>
+                <ul class="list-group list-group-flush">
+                    {% for m in dept_mentors %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <strong>{{ m.name }}</strong> 
+                            <span class="text-muted ms-2">(Incharge of Year {{ m.incharge_year }})</span>
+                        </span>
+                        {% if m.is_approved %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No mentors registered yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="mt-4">Department Student Overview</h4>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Year</th>
+                        <th>Codeforces</th>
+                        <th>LeetCode</th>
+                        <th>CodeChef</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in dept_students %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('student_detail', user_id=s.id) }}" class="fw-bold text-decoration-none">
+                                {{ s.name }}
+                            </a>
+                        </td>
+                        <td>{{ s.year_of_study }}</td>
+                        {% for stat in s.stats %}
+                        <td>
+                            {% if not stat.error %}
+                                {{ stat.rating }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="text-center py-3">No approved students found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addContestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Assign New Contest</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('create_contest') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Contest Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Weekly Contest 355 or Starters 100" required>
+                            <small class="text-muted">Must match exact platform name for auto-tracking.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contest Link (URL)</label>
+                            <input type="text" name="link" class="form-control" placeholder="https://..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Platform</label>
+                            <select name="platform" class="form-select">
+                                <option>LeetCode</option>
+                                <option>Codeforces</option>
+                                <option>CodeChef</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" name="date" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Assign to Students</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+
+{% if user.role == 'incharge' %}
+    <h3 class="mb-4">Institution Overview</h3>
+    
+    {% for dept_name, data in admin_report.items() %}
+    <div class="card mb-5 shadow">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <span class="fs-5">Department: <strong>{{ dept_name }}</strong></span>
+            <span class="badge bg-light text-dark">
+                HOD: {{ data.hod.name if data.hod else 'Not Assigned' }}
+            </span>
+        </div>
+        <div class="card-body">
+            
+            <div class="mb-3 p-2 bg-light rounded border">
+                <strong>Mentors:</strong>
+                {% for m in data.mentors %}
+                    <span class="badge bg-info text-dark ms-1">
+                        {{ m.name }} (Yr {{ m.incharge_year }})
+                    </span>
+                {% else %}
+                    <span class="text-muted ms-2">None</span>
+                {% endfor %}
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-hover table-bordered mb-0">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Student</th>
+                            <th>Year</th>
+                            <th>Codeforces</th>
+                            <th>LeetCode</th>
+                            <th>CodeChef</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in data.students %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('student_detail', user_id=s.id) }}">
+                                    {{ s.name }}
+                                </a>
+                            </td>
+                            <td>{{ s.year_of_study }}</td>
+                            {% for stat in s.stats %}
+                            <td>
+                                {% if not stat.error %}
+                                    {{ stat.rating }} <small class="text-muted">({{ stat.rank }})</small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted">No students in this department.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No departments found. Waiting for HODs to register.
+    </div>
+    {% endfor %}
+{% endif %}
+
+{% endblock %}

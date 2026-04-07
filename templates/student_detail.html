@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-arrow-left me-2"></i>Return to Dashboard
+        </a>
+        <div class="text-muted small fw-bold text-uppercase">Academic Record: 2025-26</div>
+    </div>
+
+    {% set lc_s = stats.LeetCode.solved if not stats.LeetCode.error else 0 %}
+    {% set cf_s = stats.Codeforces.solved if not stats.Codeforces.error else 0 %}
+    {% set cc_s = stats.CodeChef.solved if not stats.CodeChef.error else 0 %}
+    {% set total_solved = lc_s + cf_s + cc_s %}
+    
+    {% set total_avail = 12900 %} 
+    {% set total_percent = ((lc_s + cf_s) / total_avail * 100) | round(2) if total_avail > 0 else 0 %}
+
+    <div class="card shadow-sm border-0 mb-4 bg-dark text-white">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fa-solid fa-layer-group me-2 text-info"></i>Combined Platform Efficiency
+                    </h5>
+                    
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span>Aggregate Solved (LeetCode + Codeforces)</span>
+                        <span class="fw-bold text-info">{{ lc_s + cf_s }} / {{ total_avail }}</span>
+                    </div>
+                    <div class="progress" style="height: 12px; background-color: rgba(255,255,255,0.1);">
+                        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: {{ total_percent }}%"></div>
+                    </div>
+                </div>
+                <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                    <div class="display-4 fw-bold text-info">{{ total_percent }}%</div>
+                    <div class="small text-uppercase opacity-75 fw-medium">Global Portal Accuracy</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0 border-start border-5 border-primary">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center flex-column flex-md-row">
+                <div class="flex-shrink-0 bg-light rounded-circle p-3 me-md-4 mb-3 mb-md-0 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-user-graduate fa-2x text-primary"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h2 class="fw-bold text-dark mb-1">{{ student.name }}</h2>
+                    <p class="text-muted mb-0">
+                        <span class="fw-bold text-primary">{{ student.dept_code }}</span> | 
+                        Year {{ student.year_of_study }} | 
+                        <span class="small">{{ student.email }}</span>
+                    </p>
+                    <div class="mt-2">
+                        {% if student.is_approved %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-center text-md-end border-start ps-md-4 ms-md-4 mt-3 mt-md-0">
+                    <h6 class="text-muted text-uppercase small fw-bold">Combined Problem Count</h6>
+                    <h1 class="display-6 fw-bold text-dark mb-0">
+                        {{ total_solved }}
+                    </h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        
+        <div class="col-md-4">
+            <a href="https://leetcode.com/{{ student.lc_handle }}" target="_blank" class="text-decoration-none">
+                <div class="card h-100 shadow-sm border-0 border-top border-4 border-warning hover-lift">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-warning mb-0">LEETCODE</h5>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-muted small"></i>
+                        </div>
+                        {% if not stats.LeetCode.error %}
+                            <div class="row text-center g-0 mb-4 bg-light rounded py-3">
+                                <div class="col-4 border-end">
+                                    <h4 class="fw-bold mb-0 text-dark">{{ stats.LeetCode.solved }}</h4>
+                                    <small class="text-muted x-small">SOLVED</small>
+                                </div>
+                                <div class="col-4 border-end">
+                                    <h4 class="fw-bold mb-0 text-success">+{{ stats.LeetCode.today_count or 0 }}</h4>
+                                    <small class="text-muted x-small">TODAY</small>
+                                </div>
+                                <div class="col-4">
+                                    <h4 class="fw-bold mb-0 text-danger">{{ stats.LeetCode.streak or 0 }}</h4>
+                                    <small class="text-muted x-small">STREAK</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between x-small fw-bold mb-1">
+                                    <span>COVERAGE</span>
+                                    <span>{{ stats.LeetCode.solved_percentage }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" style="width: {{ stats.LeetCode.solved_percentage }}%"></div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 text-muted small">Profile Not Linked / Not Found</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="https://codeforces.com/profile/{{ student.cf_handle }}" target="_blank" class="text-decoration-none">
+                <div class="card h-100 shadow-sm border-0 border-top border-4 border-primary hover-lift">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-primary mb-0">CODEFORCES</h5>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-muted small"></i>
+                        </div>
+                        {% if not stats.Codeforces.error %}
+                            <div class="row text-center g-0 mb-4 bg-light rounded py-3">
+                                <div class="col-4 border-end">
+                                    <h4 class="fw-bold mb-0 text-dark">{{ stats.Codeforces.solved }}</h4>
+                                    <small class="text-muted x-small">SOLVED</small>
+                                </div>
+                                <div class="col-4 border-end">
+                                    <h4 class="fw-bold mb-0 text-success">+{{ stats.Codeforces.today_count or 0 }}</h4>
+                                    <small class="text-muted x-small">TODAY</small>
+                                </div>
+                                <div class="col-4">
+                                    <h4 class="fw-bold mb-0 text-primary">{{ stats.Codeforces.streak or 0 }}</h4>
+                                    <small class="text-muted x-small">STREAK</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between x-small fw-bold mb-1">
+                                    <span>COVERAGE</span>
+                                    <span>{{ stats.Codeforces.solved_percentage }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" style="width: {{ stats.Codeforces.solved_percentage }}%"></div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 text-muted small">Profile Not Linked / Not Found</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="https://www.codechef.com/users/{{ student.cc_handle }}" target="_blank" class="text-decoration-none">
+                <div class="card h-100 shadow-sm border-0 border-top border-4 border-secondary hover-lift">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="fw-bold text-secondary mb-4">CODECHEF</h5>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-muted small"></i>
+                        </div>
+                        {% if not stats.CodeChef.error %}
+                            <div class="text-center mb-3">
+                                <h2 class="fw-bold text-dark mb-0">{{ stats.CodeChef.rank }}</h2>
+                                <small class="text-muted">Star Rating</small>
+                            </div>
+                            <ul class="list-group list-group-flush small mt-3">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Fully Solved</span>
+                                    <span class="fw-bold">{{ stats.CodeChef.solved }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Rating</span>
+                                    <span class="fw-bold text-secondary">{{ stats.CodeChef.rating }}</span>
+                                </li>
+                            </ul>
+                        {% else %}
+                            <div class="text-center py-5 text-muted small">Profile Not Linked / Not Found</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom fw-bold">
+                    <i class="fa-solid fa-code me-2 text-warning"></i>LeetCode Activity (7 Days)
+                </div>
+                <div class="card-body">
+                    {% if not stats.LeetCode.error %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    {% for day in stats.LeetCode.history %}
+                                        <th style="font-size: 0.8rem;">{{ day.date[5:] }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {% for day in stats.LeetCode.history %}
+                                        <td class="{% if day.count > 0 %}bg-warning bg-opacity-10 fw-bold text-warning-emphasis{% else %}text-muted{% endif %}">
+                                            {{ day.count }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted small py-4">No LeetCode data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-bottom fw-bold">
+                    <i class="fa-solid fa-terminal me-2 text-primary"></i>Codeforces Activity (Last 7 Days)
+                </div>
+                <div class="card-body">
+                    {% if not stats.Codeforces.error %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    {% for day in stats.Codeforces.history %}
+                                        <th style="font-size: 0.8rem;">{{ day.date[5:] }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {% for day in stats.Codeforces.history %}
+                                        <td class="{% if day.count > 0 %}bg-primary bg-opacity-10 fw-bold text-primary{% else %}text-muted{% endif %}">
+                                            {{ day.count }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted small py-4">No Codeforces data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .x-small { font-size: 0.65rem; letter-spacing: 0.5px; font-weight: 700; }
+    .progress { background-color: #f0f2f4; }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+    .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .bg-secondary-subtle { background-color: #e9ecef; }
+    .table th { font-weight: 600; color: #6c757d; }
+</style>
+{% endblock %}

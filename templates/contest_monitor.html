@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Contest Monitoring</li>
+            </ol>
+        </nav>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-chevron-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4 border-start border-5 border-info">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h6 class="text-primary text-uppercase small fw-bold mb-1">Assignment Tracking Log</h6>
+                    <h2 class="fw-bold mb-2">{{ contest.name }}</h2>
+                    <div class="d-flex flex-wrap gap-3">
+                        <span class="text-muted small"><i class="fa-solid fa-globe me-1"></i> Platform: <strong>{{ contest.platform }}</strong></span>
+                        <span class="text-muted small"><i class="fa-solid fa-calendar-day me-1"></i> Deadline: <strong>{{ contest.date }}</strong></span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="bg-light p-3 rounded text-center">
+                        <h6 class="small text-muted mb-0">Registered Students</h6>
+                        <h2 class="fw-bold text-dark mb-0">{{ assignments|length }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fa-solid fa-clipboard-list me-2 text-primary"></i>Submission Status Report
+            </h5>
+            <a href="{{ url_for('download_defaulters', contest_id=contest.id) }}" class="btn btn-danger btn-sm shadow-sm">
+                <i class="fa-solid fa-file-csv me-1"></i> Download Defaulters
+            </a>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Student Name</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Follow-up Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for work in assignments %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">{{ work.user.name }}</div>
+                                <div class="text-muted small">{{ work.user.email }}</div>
+                            </td>
+
+                            <td>
+                                {% if work.status == 'Submitted' %}
+                                    <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 py-2">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Completed
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger px-3 py-2">
+                                        <i class="fa-solid fa-circle-exclamation me-1"></i> Pending
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end pe-4">
+                                {% if work.status == 'Pending' %}
+                                    <a href="mailto:{{ work.user.email }}?subject=Action Required: {{ contest.name }} Submission&body=Dear {{ work.user.name }},%0D%0A%0D%0AThis is a follow-up regarding your pending submission for the assignment: {{ contest.name }} on {{ contest.platform }}.%0D%0A%0D%0APlease ensure you complete the contest before the deadline ({{ contest.date }}).%0D%0A%0D%0ABest Regards,%0D%0ADepartment Faculty" 
+                                       class="btn btn-sm btn-outline-primary">
+                                       <i class="fa-solid fa-envelope me-1"></i> Email Warning
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small"><i class="fa-solid fa-lock me-1"></i> Verified</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-5">
+                                <i class="fa-solid fa-users-slash fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">No student records found for this department assignment.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* Professional subtler badges for status */
+    .bg-success-subtle { background-color: rgba(25, 135, 84, 0.1) !important; }
+    .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1) !important; }
+    .table-hover tbody tr:hover { background-color: #fcfcfc; }
+</style>
+{% endblock %}
