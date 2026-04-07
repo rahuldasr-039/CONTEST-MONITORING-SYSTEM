@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-8 col-lg-6">
+        
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0 fw-bold"><i class="fa-solid fa-user-plus me-2"></i>New User Registration</h4>
+            </div>
+            
+            <div class="card-body p-4 p-md-5">
+                
+                <form action="{{ url_for('register') }}" method="POST">
+                    
+                    <h6 class="text-primary border-bottom pb-2 mb-3 fw-bold">Personal Information</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">Full Name</label>
+                            <input type="text" class="form-control" name="name" placeholder="John Doe" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold">Department Code</label>
+                            <input type="text" class="form-control" name="dept_code" placeholder="e.g. CSE, ECE" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Email Address</label>
+                        <input type="email" class="form-control" name="email" placeholder="student@college.edu" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold">Password</label>
+                        <input type="password" class="form-control" name="password" placeholder="Create a secure password" required>
+                    </div>
+
+                    <h6 class="text-primary border-bottom pb-2 mb-3 fw-bold mt-4">Academic Role</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Select Designation</label>
+                        <select class="form-select" name="role" id="roleSelect" onchange="toggleFields()" required>
+                            <option value="student">Student</option>
+                            <option value="mentor">Faculty Mentor</option>
+                            <option value="hod">Head of Department (HOD)</option>
+                            <option value="incharge">Principal / Incharge</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3" id="yearField">
+                            <label class="form-label text-muted small fw-bold">Current Year of Study</label>
+                            <input type="number" class="form-control" name="year_of_study" placeholder="e.g. 1, 2, 3, 4">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3 d-none" id="mentorYearField">
+                            <label class="form-label text-muted small fw-bold">Assigned Year to Manage</label>
+                            <input type="number" class="form-control" name="incharge_year" placeholder="e.g. 2 (for Second Year Students)">
+                        </div>
+                    </div>
+
+                    <div id="codingFields" class="bg-light p-3 rounded border mt-2">
+                        <h6 class="text-secondary small fw-bold mb-3"><i class="fa-solid fa-code me-1"></i> Coding Profiles (Optional)</h6>
+                        
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Codeforces</label>
+                                <input type="text" class="form-control form-control-sm" name="cf" placeholder="Handle">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">LeetCode</label>
+                                <input type="text" class="form-control form-control-sm" name="lc" placeholder="Username">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">CodeChef</label>
+                                <input type="text" class="form-control form-control-sm" name="cc" placeholder="Handle">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary py-2 fw-bold shadow-sm">
+                            <i class="fa-solid fa-paper-plane me-2"></i>Submit Registration
+                        </button>
+                    </div>
+
+                </form>
+
+                <div class="mt-4 text-center border-top pt-3">
+                    <p class="small text-muted mb-1">Already have an account?</p>
+                    <a href="{{ url_for('login') }}" class="text-decoration-none fw-bold">Login Here</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const role = document.getElementById('roleSelect').value;
+    const yearField = document.getElementById('yearField');
+    const mentorYearField = document.getElementById('mentorYearField');
+    const codingFields = document.getElementById('codingFields');
+
+    // 1. Hide all dynamic fields first
+    yearField.classList.add('d-none');
+    mentorYearField.classList.add('d-none');
+    codingFields.classList.add('d-none');
+
+    // 2. Show based on role
+    if (role === 'student') {
+        yearField.classList.remove('d-none');
+        codingFields.classList.remove('d-none');
+    } else if (role === 'mentor') {
+        mentorYearField.classList.remove('d-none');
+    }
+    // HOD and Incharge only need basic info (Name, Email, Dept), so no extra fields shown.
+}
+</script>
+{% endblock %}
